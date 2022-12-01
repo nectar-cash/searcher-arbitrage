@@ -7,7 +7,11 @@ export { Percent, Token, CurrencyAmount } from 'npm:@uniswap/sdk-core@3.1.0'
 export { TradeType } from 'npm:@uniswap/sdk@3.0.3'
 export { default as Router } from 'npm:@uniswap/smart-order-router@3.0.3'
 
-export { METHOD_AUCTION_BID_RECIPIENT, METHOD_RPC_NEW_AUCTION, METHOD_SEARCHER_BID } from '../protocol/constants.ts'
+export {
+  METHOD_AUCTION_BID_RECIPIENT,
+  METHOD_RPC_NEW_AUCTION,
+  METHOD_SEARCHER_BID,
+} from 'https://raw.githubusercontent.com/nectar-cash/protocol/main/constants.ts'
 export type {
   PayloadAny,
   PayloadAuctionBidRecipient,
@@ -15,4 +19,4 @@ export type {
   PayloadSearcherBid,
   TransactionBundle,
   TransactionIntent,
-} from '../protocol/types.ts'
+} from 'https://raw.githubusercontent.com/nectar-cash/protocol/main/types.ts'
