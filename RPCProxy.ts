@@ -2,7 +2,6 @@ import { ethers } from './deps.ts'
 import { config } from './deps.ts'
 
 const env = config()
-// const rpcUrl = 'https://eth-mainnet.public.blastapi.io'; // Mainnet
 const rpcUrl = `https://${env['CHAIN_NAME']}.infura.io/v3/${env['INFURA_KEY']}`
 const rpc = new ethers.providers.JsonRpcProvider(rpcUrl, {
   name: env['CHAIN_NAME'],
