@@ -1,5 +1,4 @@
 import { serve } from './deps.ts'
-import { parse } from './deps.ts'
 import { ethers } from './deps.ts'
 import { config } from './deps.ts'
 
@@ -8,18 +7,16 @@ import { METHOD_AUCTION_BID_RECIPIENT, METHOD_RPC_NEW_AUCTION, METHOD_SEARCHER_B
 
 import { processTransaction } from './SearcherArbitrage.ts'
 
-const env = config()
-const { auction: auctionURL } = parse(Deno.args, { string: ['auction'] })
+const env = { ...config(), ...Deno.env.toObject() }
 
 let bidRecipient = '0x0'
 
 const registrationAddress = new ethers.Wallet(env['SELF_PRIVATE_KEY']!).address
 console.log(registrationAddress)
 
-const auctionConnection = new WebSocket(`${auctionURL}/searcher?address=${registrationAddress}`)
+const auctionConnection = new WebSocket(`${env['AUCTION_URL']}/searcher?address=${registrationAddress}`)
 
 auctionConnection.onmessage = async (m) => {
-  // console.log('Got message from auction: ', m.data)
   try {
     const body: PayloadAny = JSON.parse(m.data)
     const { method, data } = body
@@ -47,7 +44,7 @@ auctionConnection.onmessage = async (m) => {
   }
 }
 auctionConnection.onopen = () => {
-  console.log('connected to auction', auctionURL)
+  console.log('connected to auction', env['AUCTION_URL'])
 }
 
 // This is just to keep ws connection alive

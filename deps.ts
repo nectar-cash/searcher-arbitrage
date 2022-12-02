@@ -1,5 +1,4 @@
 export { serve } from 'https://deno.land/std@0.159.0/http/server.ts'
-export { parse } from 'https://deno.land/std@0.119.0/flags/mod.ts'
 export { config } from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 
 export { ethers, BigNumber } from 'npm:ethers@^5.7.2'
