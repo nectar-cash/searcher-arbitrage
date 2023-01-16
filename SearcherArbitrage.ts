@@ -12,6 +12,7 @@ import { decodeRaw } from './utils/decode.ts'
 import { getUniswapV3TradeParams } from './utils/getUniswapV3TradeParams.ts'
 
 import rpc from './RPCProxy.ts'
+import reportAddressEvent from './EventReporter.ts'
 
 export interface Multicall {
   deadline: BigNumber
@@ -22,7 +23,7 @@ export interface Multicall {
 }
 
 const env = config()
-console.log('network info', rpc.network)
+// console.log('network info', rpc.network)
 
 const WETH = new Token(parseInt(env['CHAIN_ID']), env['WETH_CONTRACT'], 18, 'WETH')
 const SwapToken = new Token(parseInt(env['CHAIN_ID']), env['TOKEN_CONTRACT'], 18, 'NTT')
@@ -32,7 +33,7 @@ const wallet = new ethers.Wallet(env['SELF_PRIVATE_KEY'], rpc)
 const uniV3Factory = new ethers.Contract(env['UNISWAP_V3_FACTORY'], IUniswapV3FactoryABI, rpc)
 const uniV3AlphaRouter = new Router.AlphaRouter({ chainId: parseInt(env['CHAIN_ID']), provider: rpc })
 const sushiRouter = new ethers.Contract(env['SUSHI_V2_ROUTER'], IUniswapV2RouterABI, wallet)
-console.log('sushi network info', await sushiRouter.signer.provider?.getNetwork())
+// console.log('sushi network info', await sushiRouter.signer.provider?.getNetwork())
 
 export function processTransaction(hash: string, tx: TransactionIntent, bidRecipient: string) {
   console.log('-'.repeat(64))
@@ -44,11 +45,11 @@ export function processTransaction(hash: string, tx: TransactionIntent, bidRecip
 
 const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidRecipient: string) => {
   // Ignore if not a allowlisted user
-  const allowedAddresses = JSON.parse(env['ALLOWED_ADDRESSES']) as string[]
-  if (!tx.from || (tx.from && allowedAddresses.indexOf(tx.from) < 0)) {
-    console.error('user not in allowlist', tx.from)
-    return
-  }
+  // const allowedAddresses = JSON.parse(env['ALLOWED_ADDRESSES']) as string[]
+  // if (!tx.from || (tx.from && allowedAddresses.indexOf(tx.from) < 0)) {
+  //   console.error('user not in allowlist', tx.from)
+  //   return
+  // }
 
   // 1. Decode the transaction data
   const decodedUniswapV3Multicall = await decodeRaw(tx.data)
@@ -63,6 +64,8 @@ const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidReci
     // No calls, or no exactInputSingle
     return
   }
+
+  reportAddressEvent(tx.from!, `Searcher: Found UniswapV3 exactInputSingle in tx ${hash}`)
 
   console.log('Found exactInputSingle call with parameters:', uniswapV3Trade)
 
@@ -127,7 +130,7 @@ const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidReci
   const filledSushiTx = await wallet.populateTransaction(populatedSushiBuyTx)
   const signedSushiBuyTx = await wallet.signTransaction(filledSushiTx)
   const decodedSushiBuyTx = ethers.utils.parseTransaction(signedSushiBuyTx)
-  console.log('compare', populatedSushiBuyTx, filledSushiTx, decodedSushiBuyTx)
+  // console.log('compare', populatedSushiBuyTx, filledSushiTx, decodedSushiBuyTx)
   // console.log('dbg', decodedSushiBuyTx)
 
   console.log('\nSushi: Swap Hash:', decodedSushiBuyTx.hash)
@@ -185,6 +188,11 @@ const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidReci
     ? ethers.utils.parseEther('0.001')
     : profitAsBigNumber.mul(8).div(10).toNumber()
   console.log('Bid in ETH:', ethers.utils.formatEther(bidAmount))
+
+  reportAddressEvent(
+    tx.from!,
+    `Searcher: Arbitrage strategy formed for tx ${hash}, bidding ${ethers.utils.formatEther(bidAmount)}`
+  )
 
   // Formulate bid transaction as payment to auction house
   const bidTx = await wallet.populateTransaction({
