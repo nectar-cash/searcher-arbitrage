@@ -7,6 +7,7 @@ const FOURBYTES_ENDPOINT = 'https://www.4byte.directory/api/v1/signatures/?hex_s
 
 const staticLookups: { [fourBytes: string]: string } = {
   '04e45aaf': 'exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))',
+  b858183f: 'exactInput((bytes,address,uint256,uint256))',
   f3995c67: 'selfPermit(address,uint256,uint256,uint8,bytes32,bytes32)',
   '49404b7c': 'unwrapWETH9(uint256,address)',
   '5023b4df': 'exactOutputSingle((address,address,uint24,address,uint256,uint256,uint160))',
@@ -62,7 +63,6 @@ async function decodeCalls(calls: string[]): Promise<Multicall['calls']> {
       console.log('===========')
       console.log('CACHE THIS:', signatureData)
       console.log('===========')
-      // TODO write cache to JSON or smth
 
       for (const signatureResult of signatureData.results) {
         lookupResults.push(signatureResult.text_signature)
