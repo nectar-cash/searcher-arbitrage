@@ -7,11 +7,15 @@ export async function reportEvent(message: string) {
 }
 
 export default async function reportAddressEvent(address: string, message: string) {
-  await fetch(env['EVENT_REPORTER_URL'], {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ address, message }),
-  })
+  try {
+    await fetch(env['EVENT_REPORTER_URL'], {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ address, message }),
+    })
+  } catch (error) {
+    console.error(error)
+  }
 }
