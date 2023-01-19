@@ -40,6 +40,9 @@ export function processTransaction(hash: string, tx: TransactionIntent, bidRecip
   if (tx.to == env['UNISWAP_V3_ROUTER'] && tx.data) {
     console.log('Uniswap tx found!')
     return handleUniswapV3Trade(hash, tx, bidRecipient)
+  } else {
+    reportAddressEvent(tx.from!, `Searcher: Tx ${hash} not directed to Uniswap V3 Router. Skipping.`)
+    console.log('Not directed to V3 router or not a smart contract call', tx.to, tx.data)
   }
 }
 
@@ -54,14 +57,18 @@ const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidReci
   // 1. Decode the transaction data
   const decodedUniswapV3Multicall = await decodeRaw(tx.data)
   if (!decodedUniswapV3Multicall) {
+    reportAddressEvent(tx.from!, `Searcher: Failed to decode Uniswap tx ${hash}. Skipping.`)
     console.error('not a multicall')
     return
+  } else {
+    console.log('Uniswap tx decoded')
   }
 
   // 1.1 Parse decoded data
   const uniswapV3Trade = getUniswapV3TradeParams(decodedUniswapV3Multicall, tx.from)
   if (!uniswapV3Trade) {
     // No calls, or no exactInputSingle
+    reportAddressEvent(tx.from!, `Searcher: Uniswap tx ${hash} is not a simple exactInputSingle swap. Skipping.`)
     return
   }
 
@@ -82,6 +89,7 @@ const handleUniswapV3Trade = async (hash: string, tx: TransactionIntent, bidReci
   // Ignore, if selling token, not buying it.
   if (uniswapV3Trade.tokenIn !== WETH.address) {
     console.log('Tx selling token, not buying')
+    reportAddressEvent(tx.from!, `Searcher: Uniswap tx ${hash} is selling, not buying the token. Skipping.`)
     return
   }
 
