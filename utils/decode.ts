@@ -14,6 +14,11 @@ const staticLookups: { [fourBytes: string]: string } = {
   '12210e8a': 'refundETH()',
 }
 
+const commandLookup: { [fourBytes: string]: string } = {
+  '00': 'v3SwapExactInput(address,uint256,uint256,bytes,bool)',
+  // address recipient, uint256 amountIn, uint256 amountOutMin, bytes memory path, bool payerIsUser
+}
+
 /**
  * Takes a Solidity function signature (e.g. `add(uint256,uint256)`) and returns and array of parameter types (`['uint256', 'uint256']`)
  */
@@ -101,6 +106,51 @@ async function decodeCalls(calls: string[]): Promise<Multicall['calls']> {
   return result
 }
 
+function decodeCommands(commands: string, inputs: string[]): Multicall['calls'] {
+  const result: Multicall['calls'] = []
+
+  const commandArray = commands.slice(2).split(/(?=(?:..)*$)/)
+  let index = 0
+  for (const command of commandArray) {
+    const input = inputs[index]
+    index++
+    if (command in commandLookup) {
+      const signature = commandLookup[command]
+
+      const call = {
+        signature: signature,
+        parameters: [] as ethers.utils.Result,
+      }
+
+      const parameters = extractParametersFromSignature(signature)
+      console.log(parameters)
+
+      let decoded
+      try {
+        decoded = ethers.utils.defaultAbiCoder.decode(parameters, input)
+      } catch (error) {
+        console.log('error decoding call', error)
+        continue
+      }
+
+      for (const [index, parameter] of parameters.entries()) {
+        call.parameters.push({
+          type: parameter,
+          value: decoded[index],
+        })
+      }
+
+      result.push([call])
+      // const output
+      // const commandInterface = new ethers.utils.Interface([`function f${functionArgs}`])
+    } else {
+      console.log('unknown command', command)
+    }
+  }
+
+  return result
+}
+
 /**
  * Decodes a multicall.
  */
@@ -120,6 +170,26 @@ export async function decodeRaw(calldata: string): Promise<Multicall | undefined
     return {
       deadline,
       calls: decodedCalls,
+    }
+  }
+}
+
+export async function decodeUniversalRaw(calldata: string): Promise<Multicall | undefined> {
+  const functionSelector = calldata.slice(0, 10) // first four bytes are the function selector
+
+  const signature = 'execute(bytes commands,bytes[] inputs,uint256 deadline)'
+  const executeInterface = new ethers.utils.Interface([`function ${signature}`])
+  const sighash = executeInterface.getSighash(signature)
+
+  if (functionSelector === sighash) {
+    const {
+      args: [commands, inputs, deadline],
+    } = executeInterface.parseTransaction({ data: calldata })
+    const decodedCommands = await decodeCommands(commands, inputs)
+
+    return {
+      deadline,
+      calls: decodedCommands,
     }
   }
 }
