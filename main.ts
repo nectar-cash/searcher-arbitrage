@@ -26,8 +26,11 @@ auctionConnection.onmessage = async (m) => {
       const { hash, tx, options } = data as PayloadRPCNewAuction['data']
       console.log('Got new tx', hash, 'with options', options)
       reportAddressEvent(tx.from!, `Searcher: Received tx ${hash} to evaluate`)
+      const t = performance.now()
       // console.log('Fees for', bidRecipient)
       const bundle = await processTransaction(hash, tx, bidRecipient)
+      const duration = performance.now() - t
+      console.log('Time in ms to build bundle', duration)
       if (bundle) {
         const auctionResultPayload: PayloadSearcherBid = {
           method: METHOD_SEARCHER_BID,

@@ -1,1 +1,1 @@
-deno run --allow-net --allow-read --allow-env main.ts --auction=ws://localhost:11011
+deno run --allow-net --allow-read --allow-env --allow-hrtime main.ts --auction=ws://localhost:11011
