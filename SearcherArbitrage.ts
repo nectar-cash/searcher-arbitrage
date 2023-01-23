@@ -255,13 +255,18 @@ const handleUniswapUniversalTrade = async (hash: string, tx: TransactionIntent, 
   console.log('Found exactInputSingle call with parameters:', uniswapV3Trade)
 
   // 2. Get Uniswap v3 pool address from Factory contract
-  const pool = await uniV3Factory.getPool(uniswapV3Trade.tokenIn, uniswapV3Trade.tokenOut, uniswapV3Trade.fee)
-  console.log('Uniswap V3 Pool for the pair:', pool)
+  let pool = env['TOKEN_UNIV3_POOL']
+  try {
+    pool = await uniV3Factory.getPool(uniswapV3Trade.tokenIn, uniswapV3Trade.tokenOut, uniswapV3Trade.fee)
+    console.log('Uniswap V3 Pool for the pair:', pool)
 
-  // Ignore, if not the test pool
-  if (pool !== env['TOKEN_UNIV3_POOL']) {
-    console.log('Tx not on test pool')
-    return
+    // Ignore, if not the test pool
+    if (pool !== env['TOKEN_UNIV3_POOL']) {
+      console.log('Tx not on test pool')
+      return
+    }
+  } catch (error) {
+    console.error('error trying to get pool, defaulting to expected value', error)
   }
 
   // Ignore, if selling token, not buying it.

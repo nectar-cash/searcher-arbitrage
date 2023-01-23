@@ -85,9 +85,9 @@ export function getUniswapUniversalTradeParams(multicall: Multicall, msgSender?:
 
   const [recipient, amountIn, amountOutMin, path, _payerIsUser] = exactInputSingle.parameters
   console.log(path.value)
-  const tokenIn = ethers.utils.hexDataSlice(path.value, 0, 20)
+  const tokenIn = ethers.utils.getAddress(ethers.utils.hexDataSlice(path.value, 0, 20))
   const fee = ethers.utils.hexDataSlice(path.value, 20, 23)
-  const tokenOut = ethers.utils.hexDataSlice(path.value, 23)
+  const tokenOut = ethers.utils.getAddress(ethers.utils.hexDataSlice(path.value, 23))
 
   // const [tokenIn, fee, tokenOut] = ethers.utils.defaultAbiCoder.decode(['address', 'address'], path.value)
 
