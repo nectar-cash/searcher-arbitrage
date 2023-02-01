@@ -13,7 +13,7 @@ const rpc = new ethers.providers.WebSocketProvider(ws, {
   chainId: parseInt(env['CHAIN_ID']),
 })
 
-setTimeout(() => {
+setInterval(() => {
   ws.reconnect()
   console.log('reconnecting websockets')
 }, 60 * 60 * 1000)
